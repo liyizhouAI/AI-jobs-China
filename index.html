@@ -982,7 +982,7 @@ window.addEventListener('orientationchange', ()=>{ setTimeout(_handleResize, 350
 /* ══════════════════════════════════
    BOOT
 ══════════════════════════════════ */
-fetch('data.json')
+fetch('data.json?v=' + Date.now())
   .then(r => r.json())
   .then(data => {
     jobs = data.occupations || [];
