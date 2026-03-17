@@ -719,9 +719,8 @@ function showDetail(r) {
       `<strong>从业人数：</strong>${fmt(r.employment_workers)}人` +
       (r.avgSalary ? `<br><strong>月薪参考：</strong>${r.avgSalary}` : '');
     document.getElementById('dd').textContent = r.detail || '';
-    srcEl.innerHTML = r.source_url
-      ? `<a href="${r.source_url}" target="_blank" rel="noopener">↗ 查看官方数据来源</a>`
-      : '';
+    const bossUrl = `https://www.zhipin.com/web/geek/job?query=${encodeURIComponent(r.title)}`;
+    srcEl.innerHTML = `<a href="${bossUrl}" target="_blank" rel="noopener">↗ 在 BOSS直聘 搜索该职位</a>`;
   }
 }
 function clearDetail() {
@@ -749,7 +748,7 @@ function showTip(e, r) {
     if (animState === 'overview') {
       h += `<div class="th">单击进入「${r._cat}」放大视图 →</div>`;
     } else {
-      h += `<div class="th">单击查看官方数据来源 ↗</div>`;
+      h += `<div class="th">单击在 BOSS直聘 搜索该职位 ↗</div>`;
     }
   }
   tip.innerHTML = h;
@@ -884,9 +883,9 @@ cv.addEventListener('click', e => {
   }
 
   if (viewMode === 'cat' && animState === 'drilled') {
-    /* Click job rect in drilled view → open source URL */
-    if (!h.isCategory && h.source_url) {
-      window.open(h.source_url, '_blank');
+    /* Click job rect in drilled view → search on BOSS直聘 */
+    if (!h.isCategory) {
+      window.open(`https://www.zhipin.com/web/geek/job?query=${encodeURIComponent(h.title)}`, '_blank');
       pinned = h;
       showDetail(h);
     }
@@ -894,9 +893,9 @@ cv.addEventListener('click', e => {
   }
 
   if (viewMode === 'all') {
-    /* Click job rect in all view → open source URL */
-    if (h.source_url) {
-      window.open(h.source_url, '_blank');
+    /* Click job rect in all view → search on BOSS直聘 */
+    if (!h.isCategory) {
+      window.open(`https://www.zhipin.com/web/geek/job?query=${encodeURIComponent(h.title)}`, '_blank');
       pinned = h;
       showDetail(h);
     }
