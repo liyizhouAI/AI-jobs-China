@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>中国AI职业冲击预测</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#0d1117;color:#e6eaf0;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Noto Sans CJK SC",system-ui,sans-serif}
+body{display:flex}
+
+/* ═══ SIDEBAR ═══ */
+#sidebar{
+  width:252px;flex-shrink:0;
+  background:#131920;border-right:1px solid rgba(255,255,255,.07);
+  padding:20px 16px 16px;
+  display:flex;flex-direction:column;overflow-y:auto
+}
+.s-title{font-size:15px;font-weight:800;letter-spacing:.01em;margin-bottom:4px;
+  background:linear-gradient(120deg,#60a5fa 0%,#a78bfa 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.s-sub{font-size:12px;color:#4e5a6a;line-height:1.6;margin-bottom:18px}
+
+/* view toggle */
+.vtog{display:flex;gap:6px;margin-bottom:18px}
+.vbtn{flex:1;padding:7px 0;border-radius:6px;border:1px solid rgba(255,255,255,.1);
+  background:transparent;color:#6b7a8d;font-size:12px;cursor:pointer;
+  font-family:inherit;transition:all .18s}
+.vbtn.on{background:#1e3558;border-color:#3b82f6;color:#93c5fd;font-weight:700}
+.vbtn:hover:not(.on){background:rgba(255,255,255,.05);color:#b0bac8}
+
+/* stats */
+.sl{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:#4e5a6a;margin-bottom:3px;margin-top:14px}
+.sv{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.01em}
+.sn{font-size:11px;color:#4e5a6a;margin-top:3px}
+
+/* histogram */
+.hist{display:flex;align-items:flex-end;gap:2px;height:44px;margin-top:8px}
+.hbar{flex:1;border-radius:2px 2px 0 0;min-height:3px}
+
+/* breakdown tiers */
+.tiers{margin-top:14px}
+.tier-row{display:flex;align-items:center;gap:7px;margin-top:7px}
+.tier-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.tier-lab{font-size:12px;color:#6b7a8d;flex:1;white-space:nowrap}
+.tier-val{font-size:12px;font-weight:600;color:#b0bac8}
+.tier-pct{font-size:11px;color:#3d4a5c;margin-left:3px}
+
+.divider{height:1px;background:rgba(255,255,255,.07);margin:16px 0}
+
+/* hint & detail */
+#hint{font-size:12px;color:#3a4555;line-height:1.9}
+#hint.gone{display:none}
+#dpanel{display:none}
+#dpanel.on{display:block}
+.dt{font-size:17px;font-weight:700;line-height:1.3;margin-bottom:7px}
+.dt.gold{color:#f59e0b}
+.ds-row{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.ds{font-size:38px;font-weight:800;line-height:1}
+.ds-unit{font-size:14px;color:#4e5a6a}
+.dr{font-size:12px;color:#7a8899;line-height:2.1}
+.dr strong{color:#b0bac8}
+.dd{font-size:12px;color:#8a9aaa;line-height:1.85;
+  margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.07)}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+  margin-top:auto;padding-top:16px}
+.ldot{width:16px;height:8px;border-radius:2px;display:inline-block}
+.ll{font-size:11px;color:#4e5a6a;margin-right:6px}
+
+/* ═══ CANVAS AREA ═══ */
+#main{flex:1;position:relative;overflow:hidden}
+#cv{display:block;position:absolute;top:0;left:0}
+
+/* breadcrumb */
+#bc{
+  position:absolute;top:12px;left:12px;z-index:20;
+  display:none;align-items:center;gap:8px;
+  font-size:13px;
+  background:rgba(13,17,23,.9);backdrop-filter:blur(10px);
+  padding:6px 14px;border-radius:8px;
+  border:1px solid rgba(255,255,255,.11);
+  box-shadow:0 4px 24px rgba(0,0,0,.45);
+  animation:bcIn .2s ease
+}
+#bc.on{display:flex}
+@keyframes bcIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+#bchome{color:#60a5fa;cursor:pointer;font-weight:600}
+#bchome:hover{text-decoration:underline}
+.bcsep{color:#2a3545;font-size:16px}
+#bccat{color:#e6eaf0}
+
+/* tooltip */
+#tip{
+  position:fixed;background:#0d1117;
+  border:1px solid rgba(255,255,255,.13);border-radius:10px;
+  padding:13px 15px;max-width:275px;
+  opacity:0;pointer-events:none;z-index:300;
+  transition:opacity .09s;
+  box-shadow:0 8px 36px rgba(0,0,0,.55)
+}
+#tip.on{opacity:1}
+.tn{font-size:14px;font-weight:700;margin-bottom:3px;line-height:1.3}
+.tn.gold{color:#f59e0b}
+.ts{font-size:28px;font-weight:800;margin-bottom:6px;line-height:1}
+.tm{font-size:12px;color:#5a6878;line-height:1.85}
+.th{font-size:11px;color:#2e3d50;margin-top:6px;padding-top:6px;
+  border-top:1px solid rgba(255,255,255,.06)}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="s-title">中国AI职业冲击预测</div>
+  <div class="s-sub">123个职业 · 颜色 = AI暴露程度</div>
+
+  <div class="vtog">
+    <button class="vbtn"    id="btn-all" onclick="setView('all')">全部职业</button>
+    <button class="vbtn on" id="btn-cat" onclick="setView('cat')">按行业</button>
+  </div>
+
+  <div class="sl">总从业人数</div>
+  <div class="sv" id="sw">—</div>
+
+  <div class="sl">加权平均暴露度</div>
+  <div class="sv" id="se">—</div>
+  <div class="sn">0–10，越高风险越大</div>
+
+  <div class="sl">暴露度分布</div>
+  <div class="hist" id="hist"></div>
+
+  <div class="tiers" id="tiers"></div>
+
+  <div class="divider"></div>
+
+  <div id="hint">
+    悬停职业查看简介<br>
+    单击行业区块进入放大视图<br>
+    <span style="color:#252f3d">放大后可单击职业固定详情</span>
+  </div>
+  <div id="dpanel">
+    <div class="dt" id="dt">—</div>
+    <div class="ds-row">
+      <div class="ds" id="ds">—</div>
+      <div class="ds-unit">/ 10</div>
+    </div>
+    <div class="dr" id="dr"></div>
+    <div class="dd" id="dd"></div>
+  </div>
+
+  <div class="legend">
+    <span class="ldot" style="background:#1e7a40"></span><span class="ll">低风险</span>
+    <span class="ldot" style="background:#c9a227"></span><span class="ll">中风险</span>
+    <span class="ldot" style="background:#c0392b"></span><span class="ll">高风险</span>
+  </div>
+</div>
+
+<div id="main">
+  <canvas id="cv"></canvas>
+  <div id="bc">
+    <span id="bchome">全部行业</span>
+    <span class="bcsep">›</span>
+    <span id="bccat"></span>
+  </div>
+</div>
+
+<div id="tip"></div>
+
+<script>
+/* ══════════════════════════════════
+   CORE STATE
+══════════════════════════════════ */
+const cv  = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let jobs     = [];
+let hover    = null;
+let pinned   = null;
+let viewMode = 'cat'; // 'all' | 'cat'
+let rafId;
+
+const PAD     = 4;
+const CPAD    = 3;   // category inner padding px
+const TITLE_H = 18;  // category title bar height px
+
+/* Layout caches */
+let flatRects      = [];   // viewMode='all': all 123 jobs
+let catRects       = [];   // category blocks across full canvas
+let nestedJobRects = {};   // { catName: [job rects with ._cat] }
+let drillJobRects  = [];   // full-canvas rects for drilledCat
+
+/* Animation state machine */
+let animState  = 'overview'; // 'overview' | 'animIn' | 'drilled' | 'animOut'
+let animStart  = 0;
+const ANIM_DUR = 450; // ms
+let drilledCat = null;
+
+/* ══════════════════════════════════
+   EASING + LERP
+══════════════════════════════════ */
+function easeInOut(t) {
+  return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+}
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+/* ══════════════════════════════════
+   COLOR  0–10
+══════════════════════════════════ */
+function clr(s) {
+  const t = Math.max(0, Math.min(10, +s)) / 10;
+  let r, g, b;
+  if (t < 0.45) {
+    const p = t / 0.45;
+    r = Math.round(30  + p*168); g = Math.round(122 + p*28); b = Math.round(62 - p*22);
+  } else if (t < 0.72) {
+    const p = (t-0.45)/0.27;
+    r = Math.round(198 + p*38); g = Math.round(150 + p*12); b = Math.round(40 - p*20);
+  } else {
+    const p = (t-0.72)/0.28;
+    r = Math.round(236 - p*26); g = Math.round(162 - p*140); b = Math.round(20 - p*6);
+  }
+  return `rgb(${r},${g},${b})`;
+}
+
+/* ══════════════════════════════════
+   SIZE COMPRESSION
+   pow(n, 0.72) so agriculture (100M)
+   doesn't swallow the whole canvas
+══════════════════════════════════ */
+function visSize(n) { return Math.pow(n, 0.72); }
+
+/* ══════════════════════════════════
+   NUMBER FORMAT
+══════════════════════════════════ */
+function fmt(n) {
+  if (n >= 1e8) return (n/1e8).toFixed(1)+'亿';
+  if (n >= 1e4) return Math.round(n/1e4)+'万';
+  return n.toLocaleString();
+}
+
+/* ══════════════════════════════════
+   SQUARIFY  (recursive, correct)
+══════════════════════════════════ */
+function squarify(items, x, y, w, h) {
+  const s = [...items].sort((a,b) => b.value - a.value);
+  const tot = s.reduce((a,d) => a+d.value, 0);
+  if (!tot || w < 1 || h < 1) return [];
+  const out = [];
+  _sq(s, 0, x, y, w, h, tot, out);
+  return out;
+}
+function _sq(it, i0, x, y, w, h, rem, out) {
+  if (i0 >= it.length) return;
+  if (i0 === it.length-1) { out.push({...it[i0], x, y, w, h}); return; }
+  const wide = w >= h;
+  let end = i0+1, rSum = it[i0].value;
+  let best = _ar(it, i0, end, rSum, w, h, rem, wide);
+  while (end < it.length) {
+    const ns = rSum + it[end].value;
+    const na = _ar(it, i0, end+1, ns, w, h, rem, wide);
+    if (na > best) break;
+    best = na; rSum = ns; end++;
+  }
+  const thick = wide ? w*rSum/rem : h*rSum/rem;
+  let off = 0;
+  for (let i = i0; i < end; i++) {
+    const len = wide ? h*it[i].value/rSum : w*it[i].value/rSum;
+    if (wide) out.push({...it[i], x,      y:y+off, w:thick, h:len});
+    else      out.push({...it[i], x:x+off, y,      w:len,   h:thick});
+    off += len;
+  }
+  const left = rem - rSum;
+  if (left > 0) {
+    if (wide) _sq(it, end, x+thick, y, w-thick, h, left, out);
+    else      _sq(it, end, x, y+thick, w, h-thick, left, out);
+  }
+}
+function _ar(it, i0, end, rSum, w, h, rem, wide) {
+  if (!rSum) return Infinity;
+  const thick = wide ? w*rSum/rem : h*rSum/rem;
+  let mx = 0;
+  for (let i = i0; i < end; i++) {
+    const len = wide ? h*it[i].value/rSum : w*it[i].value/rSum;
+    if (!len) continue;
+    mx = Math.max(mx, thick/len, len/thick);
+  }
+  return mx;
+}
+
+/* ══════════════════════════════════
+   RESIZE
+══════════════════════════════════ */
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  const W = window.innerWidth  - document.getElementById('sidebar').offsetWidth;
+  const H = window.innerHeight;
+  cv.width  = Math.round(W*dpr);
+  cv.height = Math.round(H*dpr);
+  cv.style.width  = W+'px';
+  cv.style.height = H+'px';
+}
+function cvW() { return parseInt(cv.style.width)  || 0; }
+function cvH() { return parseInt(cv.style.height) || 0; }
+
+/* ══════════════════════════════════
+   LAYOUT BUILDERS
+══════════════════════════════════ */
+function buildCatMap() {
+  const catMap = {};
+  for (const j of jobs) {
+    if (!catMap[j.category]) catMap[j.category] = {
+      title: j.category, value: 0, rawValue: 0, jobs: [],
+      exposure: 0, highlighted: false, isCategory: true
+    };
+    catMap[j.category].rawValue += j.employment_workers;
+    catMap[j.category].value    += visSize(j.employment_workers);
+    catMap[j.category].jobs.push(j);
+  }
+  for (const c of Object.values(catMap)) {
+    const tw = c.jobs.reduce((s,j) => s+j.employment_workers, 0) || 1;
+    c.exposure    = c.jobs.reduce((s,j) => s+j.exposure*j.employment_workers, 0) / tw;
+    c.highlighted = c.jobs.some(j => j.highlighted);
+  }
+  return catMap;
+}
+
+function buildLayout() {
+  const w = cvW(), h = cvH();
+  if (!w || !h) return;
+
+  if (viewMode === 'all') {
+    flatRects = squarify(
+      jobs.map(j => ({...j, value: visSize(j.employment_workers), isCategory: false})),
+      PAD, PAD, w-PAD*2, h-PAD*2
+    );
+    return;
+  }
+
+  /* Cat mode: build nested overview layout */
+  const catMap = buildCatMap();
+  catRects = squarify(Object.values(catMap), PAD, PAD, w-PAD*2, h-PAD*2);
+
+  nestedJobRects = {};
+  for (const cr of catRects) {
+    const jx = cr.x + CPAD;
+    const jy = cr.y + TITLE_H;
+    const jw = cr.w - CPAD * 2;
+    const jh = cr.h - TITLE_H - CPAD;
+    if (jw < 4 || jh < 4) { nestedJobRects[cr.title] = []; continue; }
+    const jItems = cr.jobs.map(j => ({
+      ...j,
+      value: visSize(j.employment_workers),
+      isCategory: false,
+      _cat: cr.title
+    }));
+    nestedJobRects[cr.title] = squarify(jItems, jx, jy, jw, jh)
+      .map(r => ({...r, _cat: cr.title}));
+  }
+
+  /* Also rebuild drill layout if needed */
+  if (drilledCat) _buildDrill(drilledCat);
+}
+
+function _buildDrill(catName) {
+  const w = cvW(), h = cvH();
+  const TOP = 46;
+  drillJobRects = squarify(
+    jobs
+      .filter(j => j.category === catName)
+      .map(j => ({...j, value: visSize(j.employment_workers), isCategory: false})),
+    PAD, PAD + TOP, w - PAD*2, h - PAD*2 - TOP
+  );
+}
+
+/* ══════════════════════════════════
+   DRAW HELPERS
+══════════════════════════════════ */
+function rrect(x, y, w, h, r) {
+  const R = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+R, y); ctx.lineTo(x+w-R, y); ctx.arcTo(x+w, y, x+w, y+R, R);
+  ctx.lineTo(x+w, y+h-R); ctx.arcTo(x+w, y+h, x+w-R, y+h, R);
+  ctx.lineTo(x+R, y+h); ctx.arcTo(x, y+h, x, y+h-R, R);
+  ctx.lineTo(x, y+R); ctx.arcTo(x, y, x+R, y, R);
+  ctx.closePath();
+}
+
+function clipTxt(txt, maxW) {
+  if (!maxW || maxW < 8) return '';
+  if (ctx.measureText(txt).width <= maxW) return txt;
+  while (txt.length > 1 && ctx.measureText(txt+'…').width > maxW) txt = txt.slice(0,-1);
+  return txt + '…';
+}
+
+/* Draw a single job tile */
+function drawJobTile(r, pulse, isHov, isSel) {
+  const {x, y, w, h} = r;
+  if (w < 1 || h < 1) return;
+
+  /* Fill */
+  ctx.fillStyle = clr(r.exposure);
+  rrect(x, y, w, h, 3);
+  ctx.fill();
+
+  /* Hover / selected tint */
+  if (isHov || isSel) {
+    ctx.fillStyle = isSel ? 'rgba(96,165,250,.12)' : 'rgba(255,255,255,.08)';
+    rrect(x, y, w, h, 3); ctx.fill();
+  }
+
+  /* Gold glow for ★ highlighted */
+  if (r.highlighted) {
+    ctx.save();
+    ctx.shadowColor = '#f59e0b';
+    ctx.shadowBlur  = 9 + pulse * 14;
+    ctx.strokeStyle = `rgba(245,158,11,${0.65 + pulse*0.35})`;
+    ctx.lineWidth   = 2.5;
+    rrect(x+1.2, y+1.2, w-2.4, h-2.4, 3); ctx.stroke();
+    ctx.restore();
+  } else if (isSel) {
+    ctx.strokeStyle = '#60a5fa'; ctx.lineWidth = 2;
+    rrect(x+1, y+1, w-2, h-2, 3); ctx.stroke();
+  } else if (isHov) {
+    ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1.5;
+    rrect(x+.8, y+.8, w-1.6, h-1.6, 3); ctx.stroke();
+  }
+
+  /* Labels */
+  if (w > 46 && h > 21) {
+    const nc = r.highlighted ? '#fde68a' : 'rgba(255,255,255,.95)';
+    const mc = r.highlighted ? 'rgba(253,230,138,.6)' : 'rgba(255,255,255,.5)';
+    const fs = (w > 80 && h > 38) ? 13 : 12;
+    ctx.font = `600 ${fs}px -apple-system,"PingFang SC",sans-serif`;
+    ctx.fillStyle = nc;
+    ctx.fillText(clipTxt(r.title, w - 10), x + 6, y + 17);
+    if (h > 33) {
+      ctx.font = `11px -apple-system,"PingFang SC",sans-serif`;
+      ctx.fillStyle = mc;
+      ctx.fillText(clipTxt(`${r.exposure}/10 · ${fmt(r.employment_workers)}人`, w - 10), x + 6, y + 31);
+    }
+  }
+}
+
+/* Draw category block chrome (background border + title bar) */
+function drawCatChrome(cr, alpha) {
+  ctx.save();
+  ctx.globalAlpha = (ctx.globalAlpha || 1) * alpha;
+
+  /* Subtle background */
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  rrect(cr.x, cr.y, cr.w, cr.h, 5); ctx.fill();
+
+  /* Border */
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 1.2;
+  rrect(cr.x, cr.y, cr.w, cr.h, 5); ctx.stroke();
+
+  /* Title bar */
+  if (cr.h > TITLE_H && cr.w > 30) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(cr.x, cr.y, cr.w, Math.min(TITLE_H, cr.h));
+    ctx.clip();
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(cr.x, cr.y, cr.w, TITLE_H);
+    if (cr.w > 44) {
+      ctx.font = `600 11px -apple-system,"PingFang SC",sans-serif`;
+      ctx.fillStyle = 'rgba(255,255,255,0.72)';
+      ctx.fillText(clipTxt(cr.title, cr.w - 8), cr.x + 4, cr.y + 13);
+    }
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+/* ══════════════════════════════════
+   DRAW MODES
+══════════════════════════════════ */
+function drawFlat(pulse) {
+  for (const r of flatRects) {
+    drawJobTile(r, pulse, r === hover, r === pinned);
+  }
+}
+
+function drawOverview(pulse) {
+  for (const cr of catRects) {
+    /* Category chrome (drawn first so tiles sit inside border) */
+    drawCatChrome(cr, 1);
+    /* Nested job tiles */
+    const jobsInCat = nestedJobRects[cr.title] || [];
+    for (const jr of jobsInCat) {
+      drawJobTile(jr, pulse, jr === hover, jr === pinned);
+    }
+  }
+}
+
+function drawDrilled(pulse) {
+  for (const r of drillJobRects) {
+    drawJobTile(r, pulse, r === hover, r === pinned);
+  }
+}
+
+/* Animated transition between overview (t=0) and drilled (t=1) */
+function drawAnimTransition(t, pulse) {
+  /* Build lookup: title → nested rect for drilledCat */
+  const nestedMap = {};
+  for (const jr of (nestedJobRects[drilledCat] || [])) {
+    nestedMap[jr.title] = jr;
+  }
+
+  /* ── Fade out everything else ── */
+  const fadeAlpha = 1 - t;
+  if (fadeAlpha > 0.005) {
+    ctx.save();
+    ctx.globalAlpha = fadeAlpha;
+
+    /* Drilled cat's container chrome */
+    const dcr = catRects.find(c => c.title === drilledCat);
+    if (dcr) drawCatChrome(dcr, 1);
+
+    /* Other categories */
+    for (const cr of catRects) {
+      if (cr.title === drilledCat) continue;
+      drawCatChrome(cr, 1);
+      for (const jr of (nestedJobRects[cr.title] || [])) {
+        drawJobTile(jr, pulse, false, false);
+      }
+    }
+    ctx.restore();
+  }
+
+  /* ── Animate drilled cat's jobs from nested → drill positions ── */
+  for (const dr of drillJobRects) {
+    const nr = nestedMap[dr.title];
+    if (!nr) {
+      /* Tile exists only in drill view — fade it in */
+      ctx.save(); ctx.globalAlpha = t;
+      drawJobTile(dr, pulse, false, false);
+      ctx.restore();
+      continue;
+    }
+    const ix = lerp(nr.x, dr.x, t);
+    const iy = lerp(nr.y, dr.y, t);
+    const iw = lerp(nr.w, dr.w, t);
+    const ih = lerp(nr.h, dr.h, t);
+    drawJobTile({...dr, x: ix, y: iy, w: iw, h: ih}, pulse, false, false);
+  }
+}
+
+/* ══════════════════════════════════
+   MAIN DRAW + rAF LOOP
+══════════════════════════════════ */
+function draw(t) {
+  const dpr = window.devicePixelRatio || 1;
+  const W = cvW(), H = cvH();
+  if (!W || !H) return;
+  const pulse = 0.5 + 0.5 * Math.sin((t || 0) / 620);
+
+  ctx.save();
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  if (viewMode === 'all') {
+    drawFlat(pulse);
+  } else if (animState === 'overview') {
+    drawOverview(pulse);
+  } else if (animState === 'animIn') {
+    const prog   = Math.min(1, (t - animStart) / ANIM_DUR);
+    const eased  = easeInOut(prog);
+    drawAnimTransition(eased, pulse);
+    if (prog >= 1) {
+      animState = 'drilled';
+      _showBreadcrumb(drilledCat);
+    }
+  } else if (animState === 'drilled') {
+    drawDrilled(pulse);
+  } else if (animState === 'animOut') {
+    const prog  = Math.min(1, (t - animStart) / ANIM_DUR);
+    const eased = easeInOut(prog);
+    drawAnimTransition(1 - eased, pulse); // reverse
+    if (prog >= 1) {
+      animState  = 'overview';
+      drilledCat = null;
+      hover = null; pinned = null;
+      _hideBreadcrumb();
+      clearDetail();
+    }
+  }
+
+  ctx.restore();
+}
+
+function loop(t) {
+  draw(t);
+  rafId = requestAnimationFrame(loop);
+}
+
+/* ══════════════════════════════════
+   BREADCRUMB
+══════════════════════════════════ */
+function _showBreadcrumb(cat) {
+  document.getElementById('bccat').textContent = cat;
+  document.getElementById('bc').classList.add('on');
+}
+function _hideBreadcrumb() {
+  document.getElementById('bc').classList.remove('on');
+}
+
+/* ══════════════════════════════════
+   SIDEBAR STATS
+══════════════════════════════════ */
+function updateStats(list) {
+  const tot = list.reduce((s,j) => s+j.employment_workers, 0);
+  const avg = tot ? list.reduce((s,j) => s+j.exposure*j.employment_workers, 0) / tot : 0;
+  document.getElementById('sw').textContent = fmt(tot);
+  document.getElementById('se').textContent = avg.toFixed(1);
+
+  const bins = Array(11).fill(0);
+  list.forEach(j => { bins[Math.min(10, Math.floor(j.exposure))] += j.employment_workers; });
+  const maxB = Math.max(...bins, 1);
+  const hist = document.getElementById('hist');
+  hist.innerHTML = '';
+  bins.forEach((v, i) => {
+    const b = document.createElement('div');
+    b.className = 'hbar';
+    b.style.background = clr(i);
+    b.style.height = Math.max(4, v/maxB*100) + '%';
+    b.title = `暴露度${i}：${fmt(v)}人`;
+    hist.appendChild(b);
+  });
+
+  const trs = [
+    {lab:'极低 (0–2)', mn:0, mx:2},
+    {lab:'低   (3–4)', mn:3, mx:4},
+    {lab:'中   (5–6)', mn:5, mx:6},
+    {lab:'高   (7–8)', mn:7, mx:8},
+    {lab:'极高 (9–10)', mn:9, mx:10},
+  ];
+  const tc = document.getElementById('tiers');
+  tc.innerHTML = '';
+  trs.forEach(tr => {
+    const sub = list.filter(j => j.exposure >= tr.mn && j.exposure <= tr.mx);
+    const cnt = sub.reduce((s,j) => s+j.employment_workers, 0);
+    if (!cnt) return;
+    const pct = (cnt/tot*100).toFixed(0);
+    const row = document.createElement('div');
+    row.className = 'tier-row';
+    row.innerHTML = `<span class="tier-dot" style="background:${clr((tr.mn+tr.mx)/2)}"></span>
+      <span class="tier-lab">${tr.lab}</span>
+      <span class="tier-val">${fmt(cnt)}</span>
+      <span class="tier-pct">${pct}%</span>`;
+    tc.appendChild(row);
+  });
+}
+
+/* ══════════════════════════════════
+   DETAIL PANEL
+══════════════════════════════════ */
+function showDetail(r) {
+  document.getElementById('hint').classList.add('gone');
+  document.getElementById('dpanel').classList.add('on');
+  const te = document.getElementById('dt');
+  te.textContent = r.title;
+  te.className = 'dt' + (r.highlighted ? ' gold' : '');
+  const se = document.getElementById('ds');
+  se.textContent = r.exposure.toFixed(1);
+  se.style.color = clr(r.exposure);
+  if (r.isCategory) {
+    document.getElementById('dr').innerHTML =
+      `<strong>细分职业：</strong>${r.jobs.length}个<br>` +
+      `<strong>总从业人数：</strong>${fmt(r.rawValue || 0)}人`;
+    document.getElementById('dd').textContent = '单击进入该行业查看所有细分职业 →';
+  } else {
+    document.getElementById('dr').innerHTML =
+      `<strong>行业类别：</strong>${r.category}<br>` +
+      `<strong>从业人数：</strong>${fmt(r.employment_workers)}人` +
+      (r.avgSalary ? `<br><strong>月薪参考：</strong>${r.avgSalary}` : '');
+    document.getElementById('dd').textContent = r.detail || '';
+  }
+}
+function clearDetail() {
+  if (pinned) return;
+  document.getElementById('hint').classList.remove('gone');
+  document.getElementById('dpanel').classList.remove('on');
+}
+
+/* ══════════════════════════════════
+   TOOLTIP
+══════════════════════════════════ */
+const tip = document.getElementById('tip');
+function showTip(e, r) {
+  const gc = r.highlighted ? ' class="tn gold"' : ' class="tn"';
+  const workers = r.isCategory ? (r.rawValue || 0) : r.employment_workers;
+  let h = `<div${gc}>${r.title}</div>
+    <div class="ts" style="color:${clr(r.exposure)}">${r.exposure.toFixed(1)}<span style="font-size:15px;font-weight:400;color:#3d4a5c"> /10</span></div>
+    <div class="tm">`;
+  if (r.isCategory) {
+    h += `行业 · ${r.jobs.length}个细分职业<br>总从业：${fmt(workers)}人</div>
+      <div class="th">单击展开该行业 →</div>`;
+  } else {
+    h += `从业人数：${fmt(workers)}人<br>行业：${r.category}` +
+         (r.avgSalary ? `<br>月薪：${r.avgSalary}` : '') + `</div>`;
+    if (animState === 'overview') {
+      h += `<div class="th">单击进入「${r._cat}」放大视图 →</div>`;
+    }
+  }
+  tip.innerHTML = h;
+  let tx = e.clientX + 20, ty = e.clientY + 16;
+  if (tx + 285 > window.innerWidth)  tx = e.clientX - 290;
+  if (ty + 185 > window.innerHeight) ty = e.clientY - 190;
+  tip.style.left = tx + 'px'; tip.style.top = ty + 'px';
+  tip.classList.add('on');
+}
+function hideTip() { tip.classList.remove('on'); }
+
+/* ══════════════════════════════════
+   HIT TEST
+══════════════════════════════════ */
+function hitTest(ex, ey) {
+  const m = document.getElementById('main').getBoundingClientRect();
+  const x = ex - m.left, y = ey - m.top;
+
+  if (viewMode === 'all') {
+    for (let i = flatRects.length-1; i >= 0; i--) {
+      const r = flatRects[i];
+      if (x >= r.x && x < r.x+r.w && y >= r.y && y < r.y+r.h) return r;
+    }
+    return null;
+  }
+
+  /* No hit testing during transitions */
+  if (animState === 'animIn' || animState === 'animOut') return null;
+
+  if (animState === 'drilled') {
+    for (let i = drillJobRects.length-1; i >= 0; i--) {
+      const r = drillJobRects[i];
+      if (x >= r.x && x < r.x+r.w && y >= r.y && y < r.y+r.h) return r;
+    }
+    return null;
+  }
+
+  /* Overview: check nested job rects (most specific) then category blocks */
+  for (const cat in nestedJobRects) {
+    const jrects = nestedJobRects[cat];
+    for (let i = jrects.length-1; i >= 0; i--) {
+      const r = jrects[i];
+      if (x >= r.x && x < r.x+r.w && y >= r.y && y < r.y+r.h) return r;
+    }
+  }
+  for (let i = catRects.length-1; i >= 0; i--) {
+    const r = catRects[i];
+    if (x >= r.x && x < r.x+r.w && y >= r.y && y < r.y+r.h) return r;
+  }
+  return null;
+}
+
+/* ══════════════════════════════════
+   VIEW TOGGLE
+══════════════════════════════════ */
+function setView(mode) {
+  viewMode   = mode;
+  drilledCat = null;
+  animState  = 'overview';
+  pinned = null; hover = null;
+  document.getElementById('btn-all').classList.toggle('on', mode === 'all');
+  document.getElementById('btn-cat').classList.toggle('on', mode === 'cat');
+  _hideBreadcrumb();
+  clearDetail();
+  updateStats(jobs);
+  buildLayout();
+}
+
+/* ══════════════════════════════════
+   DRILL IN/OUT
+══════════════════════════════════ */
+function drillIn(catName) {
+  drilledCat = catName;
+  _buildDrill(catName);
+  animStart  = performance.now();
+  animState  = 'animIn';
+  hover = null; pinned = null;
+  hideTip();
+  _hideBreadcrumb(); /* will auto-show when animIn finishes */
+  updateStats(jobs.filter(j => j.category === catName));
+  document.getElementById('hint').textContent = '';
+  document.getElementById('hint').classList.remove('gone');
+  document.getElementById('dpanel').classList.remove('on');
+}
+
+function drillOut() {
+  if (animState !== 'drilled') return;
+  animStart = performance.now();
+  animState = 'animOut';
+  hover = null; pinned = null;
+  hideTip();
+  _hideBreadcrumb();
+  updateStats(jobs);
+  clearDetail();
+}
+
+/* ══════════════════════════════════
+   EVENTS
+══════════════════════════════════ */
+cv.addEventListener('mousemove', e => {
+  if (animState === 'animIn' || animState === 'animOut') {
+    hover = null; hideTip(); return;
+  }
+  const h = hitTest(e.clientX, e.clientY);
+  hover = h;
+  cv.style.cursor = h ? 'pointer' : 'default';
+  if (h) {
+    showTip(e, h);
+    if (!pinned) showDetail(h);
+  } else {
+    hideTip();
+    if (!pinned) clearDetail();
+  }
+});
+
+cv.addEventListener('mouseleave', () => {
+  hover = null; hideTip();
+  if (!pinned) clearDetail();
+});
+
+cv.addEventListener('click', e => {
+  if (animState === 'animIn' || animState === 'animOut') return;
+
+  const h = hitTest(e.clientX, e.clientY);
+  if (!h) { pinned = null; clearDetail(); return; }
+
+  if (viewMode === 'cat' && animState === 'overview') {
+    /* Click in overview → drill into category */
+    const catName = h._cat || (h.isCategory ? h.title : null);
+    if (catName) drillIn(catName);
+    return;
+  }
+
+  if (viewMode === 'cat' && animState === 'drilled') {
+    /* Click in drilled view → pin/unpin detail */
+    pinned = (pinned === h) ? null : h;
+    if (pinned) showDetail(pinned);
+    else clearDetail();
+    return;
+  }
+
+  if (viewMode === 'all') {
+    pinned = (pinned === h) ? null : h;
+    if (pinned) showDetail(pinned);
+    else clearDetail();
+  }
+});
+
+document.getElementById('bchome').addEventListener('click', drillOut);
+
+window.addEventListener('resize', () => { resize(); buildLayout(); });
+
+/* ══════════════════════════════════
+   BOOT
+══════════════════════════════════ */
+fetch('data.json')
+  .then(r => r.json())
+  .then(data => {
+    jobs = data.occupations || [];
+    resize();
+    updateStats(jobs);
+    buildLayout();
+    /* Update hint for default cat view */
+    document.getElementById('hint').innerHTML =
+      '悬停职业查看简介<br>单击行业区块进入放大视图<br>' +
+      '<span style="color:#252f3d">放大后可单击职业固定详情</span>';
+    requestAnimationFrame(loop);
+  })
+  .catch(err => {
+    resize();
+    const dpr = window.devicePixelRatio || 1;
+    ctx.save(); ctx.scale(dpr, dpr);
+    ctx.fillStyle = '#e6eaf0'; ctx.font = '15px sans-serif';
+    ctx.fillText('数据加载失败，请确认同目录下存在 data.json', 20, 50);
+    ctx.restore();
+    console.error(err);
+  });
+</script>
+</body>
+</html>
