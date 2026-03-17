@@ -746,11 +746,7 @@ function showTip(e, r) {
   } else {
     h += `从业人数：${fmt(workers)}人<br>行业：${r.category}` +
          (r.avgSalary ? `<br>月薪：${r.avgSalary}` : '') + `</div>`;
-    if (animState === 'overview') {
-      h += `<div class="th">单击进入「${r._cat}」放大视图 →</div>`;
-    } else {
-      h += `<div class="th">单击查看官方数据来源 ↗</div>`;
-    }
+    h += `<div class="th">单击查看官方数据来源 ↗</div>`;
   }
   tip.innerHTML = h;
   let tx = e.clientX + 20, ty = e.clientY + 16;
@@ -876,35 +872,22 @@ cv.addEventListener('click', e => {
   const h = hitTest(e.clientX, e.clientY);
   if (!h) { pinned = null; clearDetail(); return; }
 
+  /* Job rect (non-category): always open source URL in new tab */
+  if (!h.isCategory) {
+    if (h.source_url) window.open(h.source_url, '_blank');
+    pinned = h;
+    showDetail(h);
+    return;
+  }
+
+  /* Category block: drill in / drill out */
   if (viewMode === 'cat' && animState === 'overview') {
-    /* Click in overview → drill into category */
-    const catName = h._cat || (h.isCategory ? h.title : null);
-    if (catName) drillIn(catName);
+    drillIn(h.title);
     return;
   }
-
   if (viewMode === 'cat' && animState === 'drilled') {
-    /* Click in drilled view → open source URL + pin detail */
-    const isNew = pinned !== h;
-    pinned = isNew ? h : null;
-    if (pinned) {
-      showDetail(pinned);
-      if (h.source_url) window.open(h.source_url, '_blank');
-    } else {
-      clearDetail();
-    }
-    return;
-  }
-
-  if (viewMode === 'all') {
-    const isNew = pinned !== h;
-    pinned = isNew ? h : null;
-    if (pinned) {
-      showDetail(pinned);
-      if (h.source_url) window.open(h.source_url, '_blank');
-    } else {
-      clearDetail();
-    }
+    pinned = (pinned === h) ? null : h;
+    if (pinned) showDetail(pinned); else clearDetail();
   }
 });
 
@@ -931,7 +914,7 @@ fetch('data.json')
     /* Update hint for default cat view */
     document.getElementById('hint').innerHTML =
       '悬停职业查看简介<br>单击行业区块进入放大视图<br>' +
-      '<span style="color:#252f3d">放大后可单击职业固定详情</span>';
+      '<span style="color:#4a7a9b">单击职位矩形查看官方数据来源 ↗</span>';
     requestAnimationFrame(loop);
   })
   .catch(err => {
