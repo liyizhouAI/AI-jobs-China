@@ -748,6 +748,8 @@ function showTip(e, r) {
          (r.avgSalary ? `<br>月薪：${r.avgSalary}` : '') + `</div>`;
     if (animState === 'overview') {
       h += `<div class="th">单击进入「${r._cat}」放大视图 →</div>`;
+    } else {
+      h += `<div class="th">单击查看官方数据来源 ↗</div>`;
     }
   }
   tip.innerHTML = h;
@@ -882,17 +884,27 @@ cv.addEventListener('click', e => {
   }
 
   if (viewMode === 'cat' && animState === 'drilled') {
-    /* Click in drilled view → pin/unpin detail */
-    pinned = (pinned === h) ? null : h;
-    if (pinned) showDetail(pinned);
-    else clearDetail();
+    /* Click in drilled view → open source URL + pin detail */
+    const isNew = pinned !== h;
+    pinned = isNew ? h : null;
+    if (pinned) {
+      showDetail(pinned);
+      if (h.source_url) window.open(h.source_url, '_blank');
+    } else {
+      clearDetail();
+    }
     return;
   }
 
   if (viewMode === 'all') {
-    pinned = (pinned === h) ? null : h;
-    if (pinned) showDetail(pinned);
-    else clearDetail();
+    const isNew = pinned !== h;
+    pinned = isNew ? h : null;
+    if (pinned) {
+      showDetail(pinned);
+      if (h.source_url) window.open(h.source_url, '_blank');
+    } else {
+      clearDetail();
+    }
   }
 });
 
