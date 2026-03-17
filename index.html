@@ -852,23 +852,21 @@ function getJobSearch(job) {
   const t = job.title.replace(/^★\s*/, '');
   const cat = job.category;
 
-  const mk = fn => t => fn(t);
   const boss    = t => ({ url: `https://www.zhipin.com/web/geek/job?query=${encodeURIComponent(t)}`,                                                  platform: 'BOSS直聘'  });
   const wu51    = t => ({ url: `https://search.51job.com/list/000000,000000,0000,00,9,99,${encodeURIComponent(t)},2,1.html`,                          platform: '前程无忧'  });
   const liepin  = t => ({ url: `https://www.liepin.com/zhaopin/?key=${encodeURIComponent(t)}`,                                                        platform: '猎聘'      });
   const linkedin= t => ({ url: `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(t)}&location=%E4%B8%AD%E5%9B%BD`,                 platform: 'LinkedIn'  });
   const maimai  = t => ({ url: `https://maimai.cn/job?keywords=${encodeURIComponent(t)}`,                                                             platform: '脉脉'      });
   const eleduck = t => ({ url: `https://eleduck.com/search?keyword=${encodeURIComponent(t)}`,                                                         platform: '电鸭社区'  });
-  const jike    = t => ({ url: `https://web.okjike.com/search?keywords=${encodeURIComponent(t)}`,                                                     platform: '即刻'      });
   const yizhi   = t => ({ url: `https://www.yizhipin.com/pc/job/search?keyword=${encodeURIComponent(t)}`,                                             platform: '易直聘'    });
 
   /* ── 逐职位精准路由 ── */
   const titleMap = {
     /* AI 原生新职业 */
     '智能体架构师':       linkedin,
-    'AI提效顾问':         jike,
-    '数字人IP运营者':     jike,
-    '垂直领域知识策展人': jike,
+    'AI提效顾问':         yizhi,
+    '数字人IP运营者':     boss,
+    '垂直领域知识策展人': maimai,
     '微型SaaS独立创始人': eleduck,
     '私有化模型微调专家': linkedin,
     '生成式AI系统测试员': yizhi,
@@ -882,9 +880,9 @@ function getJobSearch(job) {
     '虚拟电厂调度员':     liepin,
     '量子算法应用工程师': linkedin,
     /* 创业者 / 一人公司 */
-    '一人公司操盘手':     jike,
-    '知识付费从业者':     jike,
-    '私营企业主':         jike,
+    '一人公司操盘手':     eleduck,
+    '知识付费从业者':     maimai,
+    '私营企业主':         boss,
     '自由职业者':         eleduck,
     '跨境电商从业者':     boss,
     '职业经理人':         liepin,
@@ -907,7 +905,7 @@ function getJobSearch(job) {
   /* ── 品类默认路由 ── */
   if (cat === 'AI原生新职业')      return linkedin(t);
   if (cat === '新质生产力前沿')    return yizhi(t);
-  if (cat === '创业者与自由职业')  return jike(t);
+  if (cat === '创业者与自由职业')  return eleduck(t);
   if (cat === '信息技术与互联网')  return boss(t);
   if (cat === '金融与财务')        return wu51(t);
   if (cat === '法律与咨询')        return liepin(t);
