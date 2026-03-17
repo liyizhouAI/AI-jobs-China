@@ -1003,20 +1003,23 @@ cv.addEventListener('click', e => {
 
 document.getElementById('bchome').addEventListener('click', drillOut);
 
+// ResizeObserver watches #main directly — fires with exact new dimensions after layout,
+// handles window resize, orientation change, and iOS Safari reliably without setTimeout guessing
 let _resizeTimer;
-function _handleResize(){
+new ResizeObserver(entries => {
+  const e = entries[0];
+  if (!e) return;
+  const W = Math.round(e.contentRect.width);
+  const H = Math.round(e.contentRect.height);
+  if (!W || !H) return;
+  const dpr = window.devicePixelRatio || 1;
+  cv.width  = Math.round(W * dpr);
+  cv.height = Math.round(H * dpr);
+  cv.style.width  = W + 'px';
+  cv.style.height = H + 'px';
   clearTimeout(_resizeTimer);
-  _resizeTimer = setTimeout(()=>{ resize(); buildLayout(); }, 120);
-}
-window.addEventListener('resize', _handleResize);
-window.addEventListener('orientationchange', ()=>{
-  // iOS delays layout updates after orientationchange — fire multiple times to catch the settled state
-  [200, 400, 700, 1200].forEach(d => setTimeout(()=>{ resize(); buildLayout(); }, d));
-});
-// visualViewport is more reliable than resize on mobile Safari
-if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', _handleResize);
-}
+  _resizeTimer = setTimeout(buildLayout, 60);
+}).observe(document.getElementById('main'));
 
 /* ══════════════════════════════════
    BOOT
