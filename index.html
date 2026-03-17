@@ -108,6 +108,40 @@ body{display:flex}
   .ll{font-size:9px;margin-right:3px}
 }
 
+/* ═══ MOBILE LANDSCAPE ═══ */
+@media (orientation:landscape) and (max-height:520px){
+  #sidebar{
+    width:180px;min-width:0;
+    padding:8px 10px 8px;
+    overflow-y:auto
+  }
+  .s-title{font-size:11px;letter-spacing:0;margin-bottom:2px}
+  .s-sub{font-size:9px;margin-bottom:8px;line-height:1.4}
+  .vtog{gap:3px;margin-bottom:8px}
+  .vbtn{font-size:9px;padding:4px 0}
+  .sl{font-size:8px;text-transform:uppercase;margin-top:8px;margin-bottom:1px}
+  .sv{font-size:18px}
+  .sn{font-size:8px;margin-top:1px}
+  .hist{height:24px;margin-top:4px}
+  .tiers{margin-top:6px}
+  .tier-row{gap:4px;margin-top:4px}
+  .tier-dot{width:7px;height:7px}
+  .tier-lab{font-size:9px}
+  .tier-val{font-size:9px}
+  .tier-pct{font-size:8px;display:none}
+  .divider{margin:8px 0}
+  #hint{font-size:8px;line-height:1.6}
+  .dt{font-size:11px;margin-bottom:3px}
+  .ds{font-size:18px}
+  .ds-unit{font-size:9px}
+  .dr{font-size:8px;line-height:1.6}
+  .dd{font-size:8px;margin-top:6px;padding-top:6px}
+  .dsource a{font-size:8px}
+  .legend{gap:3px;padding-top:8px;flex-wrap:wrap}
+  .ldot{width:10px;height:5px}
+  .ll{font-size:8px;margin-right:2px}
+}
+
 /* ═══ CANVAS AREA ═══ */
 #main{flex:1;position:relative;overflow:hidden}
 #cv{display:block;position:absolute;top:0;left:0}
@@ -971,7 +1005,11 @@ function _handleResize(){
   _resizeTimer = setTimeout(()=>{ resize(); buildLayout(); }, 120);
 }
 window.addEventListener('resize', _handleResize);
-window.addEventListener('orientationchange', ()=>{ setTimeout(_handleResize, 350); });
+window.addEventListener('orientationchange', ()=>{
+  // iOS needs extra time after orientationchange for innerWidth/innerHeight to update
+  setTimeout(_handleResize, 350);
+  setTimeout(_handleResize, 750);
+});
 
 /* ══════════════════════════════════
    BOOT
